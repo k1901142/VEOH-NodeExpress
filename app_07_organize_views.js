@@ -5,27 +5,10 @@ const session = require('express-session');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const note_schema = new Schema({
-    text: {
-        type: String,
-        required: true
-    }
-});
-const note_model = new mongoose.model('note', note_schema);
+const user_model=require('./models/user-model.js');
+const user_model=require('./models/note-model.js');
 
-
-const user_schema = new Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    notes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'note',
-        req: true
-    }]
-});
-const user_model = mongoose.model('user', user_schema);
+const auth_views = require('./models/auth_views.js');
 
 let app = express();
 
@@ -84,6 +67,12 @@ app.get('/', is_logged_handler, (req, res, next) => {
             </form>`);
             user.notes.forEach((note) => {
                 res.write(note.text);
+                res.write(`
+                <form action="delete-note" method="POST">
+                    <input type="hidden" name="note_id" value="${note._id}">
+                    <button type="submit">Delete note</button>
+                </form>
+                `);
             });
 
             res.write(`
@@ -98,9 +87,38 @@ app.get('/', is_logged_handler, (req, res, next) => {
         `);
             res.end();
         });
+});
+
+app.post('/delete-note', (req, res, next) => {
+    const user = req.user;
+    const note_id_to_delete = req.body.note_id;
+
+    //Remove note from user.notes
+    const updated_notes = user.notes.filter((note_id) => {
+        return note_id != note_id_to_delete;
+    });
+    user.notes = updated_notes;
+
+    //Remove note object from database
+    user.save().then(() => {
+        note_model.findByIdAndRemove(note_id_to_delete).then(() => {
+            res.redirect('/');
+        });
+
+    });
 
 
 });
+
+app.get('/note/:id', (req, res, next)=>{
+    const note_id=req.params.id;
+    note.model.findOne({
+        _id: note_id
+    }).then((note)=> {
+        res.send(note.text);
+    });
+});
+
 
 app.post('/add-note', (req, res, next) => {
     const user = req.user;
@@ -125,18 +143,7 @@ app.post('/logout', (req, res, next) => {
 app.get('/login', (req, res, next) => {
     console.log('user: ', req.session.user)
     res.write(`
-    <html>
-    <body>
-        <form action="/login" method="POST">
-            <input type="text" name="user_name">
-            <button type="submit">Log in</button>
-        </form>
-        <form action="/register" method="POST">
-            <input type="text" name="user_name">
-            <button type="submit">Register</button>
-        </form>
-    </body>
-    <html>
+    
     `);
     res.end();
 });

@@ -84,6 +84,12 @@ app.get('/', is_logged_handler, (req, res, next) => {
             </form>`);
             user.notes.forEach((note) => {
                 res.write(note.text);
+                res.write(`
+                <form action="delete-note" method="POST">
+                    <input type="hidden" name="note_id" value="${note._id}">
+                    <button type="submit">Delete note</button>
+                </form>
+                `);
             });
 
             res.write(`
@@ -98,9 +104,38 @@ app.get('/', is_logged_handler, (req, res, next) => {
         `);
             res.end();
         });
+});
+
+app.post('/delete-note', (req, res, next) => {
+    const user = req.user;
+    const note_id_to_delete = req.body.note_id;
+
+    //Remove note from user.notes
+    const updated_notes = user.notes.filter((note_id) => {
+        return note_id != note_id_to_delete;
+    });
+    user.notes = updated_notes;
+
+    //Remove note object from database
+    user.save().then(() => {
+        note_model.findByIdAndRemove(note_id_to_delete).then(() => {
+            res.redirect('/');
+        });
+
+    });
 
 
 });
+
+app.get('/note/:id', (req, res, next)=>{
+    const note_id=req.params.id;
+    note.model.findOne({
+        _id: note_id
+    }).then((note)=> {
+        res.send(note.text);
+    });
+});
+
 
 app.post('/add-note', (req, res, next) => {
     const user = req.user;

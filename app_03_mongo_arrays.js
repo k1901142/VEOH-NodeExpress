@@ -112,7 +112,10 @@ app.post('/delete-note', (req, res, next)=> {
     user.notes=updated_notes;
 
     user.save().then(()=>{
-        res.redirect('/');
+        note_model.findByIdAndRemove(note_id_to_delete).then(()=> {
+            res.redirect('/');
+        });
+        
     });
 
 });

@@ -1,35 +1,39 @@
 const express = require('express');
+const PORT = process.env.PORT || 8080;
 
 let app = express();
 
-// kuunnellaan kaikkea sisääntulevaa viestiä
 app.use((req, res, next) => {
-    console.log('path:${req.path}');
-    next(); // seuraava kuuntelijakin olemassa
+    console.log(`path: ${req.path}`);
+    next();
 });
 
-app.use('/test', (req, res, next) => {
-    console.log('TOIMII');
-    next(); // seuraava kuuntelijakin olemassa
+app.use('/TEST', (req, res, next) => {
+    console.log('USE /TEST');
+    next();
 });
+
+app.get('/TEST/', (req, res, next) => {
+    console.log('GET /TEST');
+    next();
+});
+
+app.post('/TEST', (req, res, next) => {
+    console.log('POST /TEST');
+    next();
+});
+
 
 app.get('/', (req, res, next) => {
-    res.send('Hello world 2');
-    //res.write lukee
-    //res.end(); // lopetetaan lähetys
+    res.send(`Hello world 3`);
 });
 
-app.use((req, res, next)=> {
+app.use((req, res, next) => {
     res.status(404);
     res.send(`
-    page not found
+        page not found
     `);
-
 });
-//app.post()
 
-
-
-// start server npm run start-dev
-// Shutdown server CTRL + C
-app.listen(8080);
+//Shutdown server CTRL + C in terminal
+app.listen(PORT);

@@ -1,5 +1,4 @@
-
-const login_view=()=>{
+const login_view = () => {
     let html = `
     <html>
     <body>
@@ -14,8 +13,8 @@ const login_view=()=>{
     </body>
     <html>
     `;
-    return html;
 
+    return html;
 }
 
 module.exports.login_view = login_view;

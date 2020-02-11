@@ -5,10 +5,15 @@ const session = require('express-session');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const user_model=require('./models/user-model.js');
-const user_model=require('./models/note-model.js');
 
-const auth_views = require('./models/auth_views.js');
+//Models
+const user_model = require('./models/user-model.js');
+const note_model = require('./models/note-model.js');
+
+//Views
+const auth_views = require('./views/auth-views.js');
+const note_views = require('./views/note-views.js');
+
 
 let app = express();
 
@@ -58,34 +63,12 @@ app.get('/', is_logged_handler, (req, res, next) => {
         .execPopulate()
         .then(() => {
             console.log('user:', user);
-            res.write(`
-        <html>
-        <body>
-            Logged in as user: ${user.name}
-            <form action="/logout" method="POST">
-                <button type="submit">Log out</button>
-            </form>`);
-            user.notes.forEach((note) => {
-                res.write(note.text);
-                res.write(`
-                <form action="delete-note" method="POST">
-                    <input type="hidden" name="note_id" value="${note._id}">
-                    <button type="submit">Delete note</button>
-                </form>
-                `);
-            });
-
-            res.write(`
-            <form action="/add-note" method="POST">
-                <input type="text" name="note">
-                <button type="submit">Add note</button>
-            </form>
-            
-    
-        </html>
-        </body>
-        `);
-            res.end();
+            let data = {
+                user_name: user.name,
+                notes: user.notes
+            };
+            let html = note_views.notes_view(data);
+            res.send(html);
         });
 });
 
@@ -104,21 +87,17 @@ app.post('/delete-note', (req, res, next) => {
         note_model.findByIdAndRemove(note_id_to_delete).then(() => {
             res.redirect('/');
         });
-
     });
-
-
 });
 
-app.get('/note/:id', (req, res, next)=>{
-    const note_id=req.params.id;
-    note.model.findOne({
+app.get('/note/:id', (req, res, next) => {
+    const note_id = req.params.id;
+    note_model.findOne({
         _id: note_id
-    }).then((note)=> {
+    }).then((note) => {
         res.send(note.text);
     });
 });
-
 
 app.post('/add-note', (req, res, next) => {
     const user = req.user;
@@ -142,10 +121,7 @@ app.post('/logout', (req, res, next) => {
 
 app.get('/login', (req, res, next) => {
     console.log('user: ', req.session.user)
-    res.write(`
-    
-    `);
-    res.end();
+    res.send(auth_views.login_view());
 });
 
 app.post('/login', (req, res, next) => {
